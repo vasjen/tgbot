@@ -134,8 +134,8 @@ namespace TeleGramBot
 
                 }
 
-                
-                
+
+
 
 
 
@@ -160,16 +160,20 @@ namespace TeleGramBot
                   // instanse.Authentification(driver);
                     // instanse.BuyTheGme(driver);
                  }
-                 else {
+                */
+                //
+                if (messageText.Contains("/find"))
+                {
+                    FindingGame findingGame = new FindingGame(messageText);
 
-                     Message sentMessage_new = await botClient.SendTextMessageAsync(
+                    Message sentMessage_new = await botClient.SendTextMessageAsync(
                               chatId: chatId,
-                              text: "Finding now: "+"TEST",
+                              text: "Finding now: ",
                               cancellationToken: cancellationToken);
-                     FindingGame findingGame = new FindingGame(messageText);
-                    // findingGame.FindTheGame(findingGame._field);
-                 }
-                 */
+
+                    findingGame.FindTheGame(findingGame._field);
+                }
+                 
                 // Echo received message text
 
 
