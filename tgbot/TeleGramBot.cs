@@ -15,6 +15,7 @@ using Telegram.Bot.Types.Payments;
 using System.Diagnostics;
 using System.Collections;
 using static System.Net.WebRequestMethods;
+using Telegram.Bot.Types.InlineQueryResults;
 
 namespace TeleGramBot
 {
@@ -76,39 +77,47 @@ namespace TeleGramBot
                     if (prechek !=null)
                     {
 
-                        Console.WriteLine("MIRICALE!!!!!");
+                        Console.WriteLine("Recieved prechekout requets!");
                         await botClient.AnswerPreCheckoutQueryAsync(
                            preCheckoutQueryId: prechek.Id);
                         Console.WriteLine("Answer sended: to {0}", prechek.Id);
-                        Console.WriteLine($"User {prechek.From.Id} bought the game\n" +
-                            $"Details of order: Date: {DateTime.Now}\n" +
-                            $"Gift code sent to {prechek.OrderInfo.Email}\n" +
-                            $"OrderID: {prechek.Id}");
+                        
                         return;
 
 
                     }
-                    return;
-                    /*   if (inlineCall is not { })
-                       {
-                          await botClient.AnswerInlineQueryAsync(inlineQueryId: inlineCall.Id, inlineCall.);
-                           Console.WriteLine("Its ur choise: {0}",inlineCall.Id);
-                           return;
-                       }
-                       return;
-                   }
-
-                   */
-                }
-               
-               
-                // Only process text messages
-                if (message.Text is not { } messageText)
-                {
                     
 
+                    if (update.CallbackQuery is not { } callBack)
+                    { return; }
+                    if (callBack != null)
+
+                    {
+
+                        await botClient.AnswerCallbackQueryAsync(callbackQueryId: callBack.Id);
+                        await botClient.SendTextMessageAsync(callBack.From.Id, $"нажата кнопка! {callBack.Message}");
+                    }
+
+
                     return;
                 }
+                Console.WriteLine($"Message type is {message.Type}");
+                if (message.Type == MessageType.SuccessfulPayment)
+                { Console.WriteLine("Successful buy!");
+                  //  Console.WriteLine($"User {prechek.From.Id} bought the game\n" +
+                    //       $"Details of order: Date: {DateTime.Now}\n" +
+                      //     $"Gift code sent to {prechek.OrderInfo.Email}\n" +
+                        //   $"OrderID: {prechek.Id}\n" +
+                          // $"Amount: {prechek.TotalAmount}");
+                }
+                   
+
+
+
+
+                // Only process text messages
+                if (message.Text is not { } messageText)
+                return;
                 var chatId = message.Chat.Id;
                 
                 Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
@@ -149,6 +158,7 @@ namespace TeleGramBot
                     
                     var _testButton1 = new InlineKeyboardButton("First");
                     _testButton1.CallbackData ="WOW";
+
                     
                     var _testButton2 = new InlineKeyboardButton("Second");
                     _testButton2.CallbackData ="RLY";
@@ -163,6 +173,8 @@ namespace TeleGramBot
                               replyMarkup: menu,
                               
                               cancellationToken: cancellationToken);
+
+                    
 
 
 
