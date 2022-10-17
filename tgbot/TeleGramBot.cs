@@ -72,32 +72,32 @@ namespace TeleGramBot
                 // Only process Message updates: https://core.telegram.org/bots/api#message
                 if (update.Message is not { } message)
                 {
+                    
+                    if (update.CallbackQuery != null)
+                    {
+                        Console.WriteLine("Register callback!");
+                        await botClient.AnswerCallbackQueryAsync(callbackQueryId: update.CallbackQuery.Id);
+                        Console.WriteLine("Answer send to -> {0}\n" +
+                            "User choise is {1}", update.CallbackQuery.Id, update.CallbackQuery.Data);
+                        return;
+                    }
+                   
+                   
                     if (update.PreCheckoutQuery is not { } prechek)
                         return;
-                    if (prechek !=null)
-                    {
+                        if (prechek !=null)
+                        {
 
-                        Console.WriteLine("Recieved prechekout requets!");
-                        await botClient.AnswerPreCheckoutQueryAsync(
-                           preCheckoutQueryId: prechek.Id);
-                        Console.WriteLine("Answer sended: to {0}", prechek.Id);
-                        
-                        return;
+                            Console.WriteLine("Recieved prechekout requets!");
+                            await botClient.AnswerPreCheckoutQueryAsync(
+                               preCheckoutQueryId: prechek.Id);
+                            Console.WriteLine("Answer sended: to {0}", prechek.Id);
 
+                            return;
+                        }
 
-                    }
                     
-
-                    if (update.CallbackQuery is not { } callBack)
-                    { return; }
-                    if (callBack != null)
-
-                    {
-
-                        await botClient.AnswerCallbackQueryAsync(callbackQueryId: callBack.Id);
-                        await botClient.SendTextMessageAsync(callBack.From.Id, $"нажата кнопка! {callBack.Message}");
-                    }
-
+                    
 
                     return;
                 }
