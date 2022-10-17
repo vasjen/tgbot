@@ -49,13 +49,7 @@ namespace TeleGramBot
                     cancellationToken: cts.Token
                 );
 
-                //5322214758:TEST:e9dc9fc3-3a17-48ba-85f5-cb3aaa0737f3}
-                // STRIPE: tgnr-lkkd-eegm-aybc-bnee
-                //Smart glocal test
-                //1877036958:TEST:c0c0f684e8b1c6968e6d66a6ed77d2cd46f8be4a
-
-            
-
+          
            
             var me = await botClient.GetMeAsync();
             
@@ -65,42 +59,58 @@ namespace TeleGramBot
 
             
             Console.ReadLine();
+            
 
             // Send cancellation request to stop bot
             cts.Cancel();
+
             
             async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
             {
-             
-                if (update.PreCheckoutQuery != null)
-                {
-                    Console.WriteLine("MIRICALE!!!!!");
-                     await botClient.AnswerPreCheckoutQueryAsync(
-                         preCheckoutQueryId: update.PreCheckoutQuery.Id);
-                    Console.WriteLine("Answer sended: to {0}", update.PreCheckoutQuery.Id);
-                    
-                }
-                if (update.Message != null)
-                {
-                    if (update.Message.Type is MessageType.SuccessfulPayment)
-                    { Console.WriteLine("All good!!!"); }
-                }
-             
+
                 // Only process Message updates: https://core.telegram.org/bots/api#message
                 if (update.Message is not { } message)
                 {
+                    if (update.PreCheckoutQuery is not { } prechek)
+                        return;
+                    if (prechek !=null)
+                    {
 
+                        Console.WriteLine("MIRICALE!!!!!");
+                        await botClient.AnswerPreCheckoutQueryAsync(
+                           preCheckoutQueryId: prechek.Id);
+                        Console.WriteLine("Answer sended: to {0}", prechek.Id);
+                        Console.WriteLine($"User {prechek.From.Id} bought the game\n" +
+                            $"Details of order: Date: {DateTime.Now}\n" +
+                            $"Gift code sent to {prechek.OrderInfo.Email}\n" +
+                            $"OrderID: {prechek.Id}");
+                        return;
+
+
+                    }
                     return;
-                }
+                    /*   if (inlineCall is not { })
+                       {
+                          await botClient.AnswerInlineQueryAsync(inlineQueryId: inlineCall.Id, inlineCall.);
+                           Console.WriteLine("Its ur choise: {0}",inlineCall.Id);
+                           return;
+                       }
+                       return;
+                   }
 
+                   */
+                }
+               
+               
                 // Only process text messages
                 if (message.Text is not { } messageText)
                 {
+                    
 
                     return;
                 }
-              
                 var chatId = message.Chat.Id;
+                
                 Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
 
                 if (messageText.ToLower().Contains("want"))
@@ -123,7 +133,7 @@ namespace TeleGramBot
                                               //providerToken: "1877036958:TEST:c0c0f684e8b1c6968e6d66a6ed77d2cd46f8be4a",
                                               currency: "TRY",
                                               prices: catalog,
-                                              needEmail: false,
+                                              needEmail: true,
                                               startParameter: "exapmle",
                                               isFlexible: false,
                                               photoUrl: "https://store-images.s-microsoft.com/image/apps.55934.13550335257385479.f907e8a1-c727-4bed-9e2c-94c239249dba.b5fd70da-71e5-4849-b499-25c43d8c9a25?q=90&w=177&h=265"
@@ -134,7 +144,32 @@ namespace TeleGramBot
 
                 }
 
+                if (messageText.ToLower().Contains("btn"))
+                {   
+                    
+                    var _testButton1 = new InlineKeyboardButton("First");
+                    _testButton1.CallbackData ="WOW";
+                    
+                    var _testButton2 = new InlineKeyboardButton("Second");
+                    _testButton2.CallbackData ="RLY";
 
+
+
+                    InlineKeyboardMarkup menu = new InlineKeyboardMarkup(new[] { _testButton1, _testButton2});
+                    
+                    Message sentMessage_new = await botClient.SendTextMessageAsync(
+                              chatId: chatId,
+                              text: messageText,
+                              replyMarkup: menu,
+                              
+                              cancellationToken: cancellationToken);
+
+
+
+                }
+
+
+             
 
 
 
