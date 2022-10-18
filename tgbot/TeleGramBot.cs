@@ -16,6 +16,7 @@ using System.Diagnostics;
 using System.Collections;
 using static System.Net.WebRequestMethods;
 using Telegram.Bot.Types.InlineQueryResults;
+using System.Security.Cryptography.X509Certificates;
 
 namespace TeleGramBot
 {
@@ -25,7 +26,7 @@ namespace TeleGramBot
         {
         }
         private static string _botToken { get; set; }
-        
+        private static int _idOfPhotoMessage {get;set; }
 
         
         internal static async Task Run()
@@ -36,7 +37,26 @@ namespace TeleGramBot
             var cts = new CancellationTokenSource();
             var botClient = new TelegramBotClient(_botToken);
 
-
+            static  InlineKeyboardMarkup GenerationMethod()
+            {
+                InlineKeyboardButton _prev = new InlineKeyboardButton("<<-");
+                InlineKeyboardButton _next = new InlineKeyboardButton("->>");
+                InlineKeyboardButton _action = new InlineKeyboardButton("Buy");
+                _prev.CallbackData="Previous"; _next.CallbackData="Next";
+                _action.CallbackData="BUY!!";
+                InlineKeyboardButton[] _test1row = new InlineKeyboardButton[1];
+                
+                    _test1row[0]= new InlineKeyboardButton("BUY!!!");
+                    _test1row[0].CallbackData="invoice";
+                
+                
+                InlineKeyboardButton[] _test2row = new InlineKeyboardButton[2];
+                _test2row[0] = _prev;
+                _test2row[1] = _next;
+                
+                InlineKeyboardMarkup _menu = new InlineKeyboardMarkup(new[] {_test1row, _test2row }); ;
+                return _menu;
+            }
 
             
                 var receiverOptions = new ReceiverOptions
@@ -79,6 +99,39 @@ namespace TeleGramBot
                         await botClient.AnswerCallbackQueryAsync(callbackQueryId: update.CallbackQuery.Id);
                         Console.WriteLine("Answer send to -> {0}\n" +
                             "User choise is {1}", update.CallbackQuery.Id, update.CallbackQuery.Data);
+                         if (update.CallbackQuery.Data.ToLower()=="invoice")
+                        {
+                            LabeledPrice game1 = new LabeledPrice("Game0", 200);
+                            LabeledPrice game2 = new LabeledPrice("Game1", 500);
+
+                            LabeledPrice[] catalog = new LabeledPrice[2];
+                            catalog[0] = game1;
+                            catalog[1] = game2;
+                            await botClient.SendInvoiceAsync(chatId: update.CallbackQuery.From.Id,
+                                              title: "Product",
+                                              description: "Description",
+                                              payload: "somePayload",
+                                              providerToken: "1877036958:TEST:c0c0f684e8b1c6968e6d66a6ed77d2cd46f8be4a",
+                                              //providerToken: "1877036958:TEST:c0c0f684e8b1c6968e6d66a6ed77d2cd46f8be4a",
+                                              currency: "TRY",
+                                              prices: catalog,
+                                              needEmail: true,
+                                              startParameter: "exapmle",
+                                              isFlexible: false,
+                                              photoUrl: "https://store-images.s-microsoft.com/image/apps.55934.13550335257385479.f907e8a1-c727-4bed-9e2c-94c239249dba.b5fd70da-71e5-4849-b499-25c43d8c9a25?q=90&w=177&h=265"
+                                              );
+                        }
+                         if (update.CallbackQuery.Data.ToLower()=="previous")
+                        {
+                           
+                            await botClient.EditMessageMediaAsync(chatId: update.CallbackQuery.From.Id,
+                               messageId: _idOfPhotoMessage, new InputMediaPhoto(media: "https://store-images.s-microsoft.com/image/apps.34695.68182501197884443.ac728a87-7bc1-4a0d-8bc6-0712072da93c.25816f86-f27c-4ade-ae29-222661145f1f?w=200"));
+                            await botClient.EditMessageCaptionAsync(chatId: update.CallbackQuery.From.Id,
+                                messageId: _idOfPhotoMessage, caption: "A some different game!!!\n" +
+                                "U can buy for 60$",
+                                replyMarkup: GenerationMethod()
+                                );
+                        }
                         return;
                     }
                    
@@ -180,8 +233,22 @@ namespace TeleGramBot
 
                 }
 
+                if (messageText.ToLower().Contains("menu"))
+                {
 
-             
+                               Message sentExample = await botClient.SendPhotoAsync(
+                                chatId: chatId,
+                                photo: "https://store-images.s-microsoft.com/image/apps.55934.13550335257385479.f907e8a1-c727-4bed-9e2c-94c239249dba.b5fd70da-71e5-4849-b499-25c43d8c9a25?q=90&w=177&h=265",
+                                caption: "Name of the this Game\n Price 45$",
+                                replyMarkup: GenerationMethod());
+                    _idOfPhotoMessage = sentExample.MessageId;
+
+
+
+
+
+                }
+
 
 
 
