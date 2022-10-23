@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Xml.Linq;
 using Telegram.Bot.Types.Payments;
 
-namespace Parsing
+namespace TeleGramBot
 {
     public class GameCard
     { 

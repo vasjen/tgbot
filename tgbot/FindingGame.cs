@@ -4,16 +4,16 @@ using OpenQA.Selenium.Chrome;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Parsing
+namespace TeleGramBot
 {
     public class FindingGame
     {
         public string _field { get; set; }
-        public FindingGame(string obj)
+        public FindingGame()
         {
-            this._field = obj;
+          
         }
-
+        public  delegate void UpdateString(string value);
 
         public async void FindTheGame(string _searichg)
         {
@@ -58,7 +58,7 @@ namespace Parsing
                     for (int i = 0; i < countOfSearchingResult; i++)
                     {
                         
-                        Result=GameCard.CreatingList(_resultName[i].Text, _links[i].GetAttribute("href"),Convert.ToDouble(_resultPrice[i].GetAttribute("data-listprice")));
+                        //Result=GameCard.CreatingList(_resultName[i].Text, _links[i].GetAttribute("href"),Convert.ToDouble(_resultPrice[i].GetAttribute("data-listprice")));
                         Console.WriteLine($"|{i + 1}|\t{_resultName[i].Text} - {_resultPrice[i].GetAttribute("data-listprice")}| {_links[i].GetAttribute("href")}");
                     }
                     Console.WriteLine("Обращение через foreach  и Result ");

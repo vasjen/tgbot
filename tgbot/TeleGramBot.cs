@@ -17,25 +17,34 @@ using System.Collections;
 using static System.Net.WebRequestMethods;
 using Telegram.Bot.Types.InlineQueryResults;
 using System.Security.Cryptography.X509Certificates;
+using static TeleGramBot.FindingGame;
 
 namespace TeleGramBot
 {
+    
     public class TeleGramBotClass
     {
+        public delegate void StatusHandler(string message);
+        public event StatusHandler? Notify;
+        private int _idOfMessage;
+        private string _textValue;
         public TeleGramBotClass()
         {
         }
         private static string _botToken { get; set; }
         private static int _idOfPhotoMessage {get;set; }
+        private static string _insertText { get; set; }
 
         
         internal static async Task Run()
         {
-        
+            TeleGramBotClass tgbot = new TeleGramBotClass();
+            
             //Console.WriteLine("Insert API Token");
             _botToken = "5744464072:AAG2YTypfSV4PwWt7MlOnaB58SjvqLOlUSw";
             var cts = new CancellationTokenSource();
             var botClient = new TelegramBotClient(_botToken);
+            var newbot = new TelegramBotClient (_botToken);
 
             static  InlineKeyboardMarkup GenerationMethod()
             {
@@ -63,6 +72,13 @@ namespace TeleGramBot
                 {
                     AllowedUpdates = Array.Empty<UpdateType>() // receive all update types
                 };
+            var additionalrececvierOptions = new ReceiverOptions
+            {
+                AllowedUpdates=new UpdateType[]
+                {
+                    UpdateType.Message
+                }
+            };
                 botClient.StartReceiving(
                     updateHandler: HandleUpdateAsync,
                     pollingErrorHandler: HandlePollingErrorAsync,
@@ -72,11 +88,11 @@ namespace TeleGramBot
 
           
            
-            var me = await botClient.GetMeAsync();
+           // var me = await botClient.GetMeAsync();
             
             
 
-            Console.WriteLine($"Start listening for @{me.Username}");
+           // Console.WriteLine($"Start listening for @{me.Username}");
 
             
             Console.ReadLine();
@@ -89,17 +105,18 @@ namespace TeleGramBot
             async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
             {
 
+
                 // Only process Message updates: https://core.telegram.org/bots/api#message
                 if (update.Message is not { } message)
                 {
-                    
+
                     if (update.CallbackQuery != null)
                     {
                         Console.WriteLine("Register callback!");
                         await botClient.AnswerCallbackQueryAsync(callbackQueryId: update.CallbackQuery.Id);
                         Console.WriteLine("Answer send to -> {0}\n" +
                             "User choise is {1}", update.CallbackQuery.Id, update.CallbackQuery.Data);
-                         if (update.CallbackQuery.Data.ToLower()=="invoice")
+                        if (update.CallbackQuery.Data.ToLower()=="invoice")
                         {
                             LabeledPrice game1 = new LabeledPrice("Game0", 200);
                             LabeledPrice game2 = new LabeledPrice("Game1", 500);
@@ -121,9 +138,9 @@ namespace TeleGramBot
                                               photoUrl: "https://store-images.s-microsoft.com/image/apps.55934.13550335257385479.f907e8a1-c727-4bed-9e2c-94c239249dba.b5fd70da-71e5-4849-b499-25c43d8c9a25?q=90&w=177&h=265"
                                               );
                         }
-                         if (update.CallbackQuery.Data.ToLower()=="previous")
+                        if (update.CallbackQuery.Data.ToLower()=="previous")
                         {
-                           
+
                             await botClient.EditMessageMediaAsync(chatId: update.CallbackQuery.From.Id,
                                messageId: _idOfPhotoMessage, new InputMediaPhoto(media: "https://store-images.s-microsoft.com/image/apps.34695.68182501197884443.ac728a87-7bc1-4a0d-8bc6-0712072da93c.25816f86-f27c-4ade-ae29-222661145f1f?w=200"));
                             await botClient.EditMessageCaptionAsync(chatId: update.CallbackQuery.From.Id,
@@ -134,34 +151,37 @@ namespace TeleGramBot
                         }
                         return;
                     }
-                   
-                   
                     if (update.PreCheckoutQuery is not { } prechek)
                         return;
-                        if (prechek !=null)
-                        {
+                    if (prechek !=null)
+                    {
 
-                            Console.WriteLine("Recieved prechekout requets!");
-                            await botClient.AnswerPreCheckoutQueryAsync(
-                               preCheckoutQueryId: prechek.Id);
-                            Console.WriteLine("Answer sended: to {0}", prechek.Id);
+                        Console.WriteLine("Recieved prechekout requets!");
+                        await botClient.AnswerPreCheckoutQueryAsync(
+                           preCheckoutQueryId: prechek.Id);
+                        Console.WriteLine("Answer sended: to {0}", prechek.Id);
 
-                            return;
-                        }
-
-                    
-                    
-
+                        return;
+                    }
                     return;
                 }
+                tgbot._idOfMessage=message.MessageId;
                 Console.WriteLine($"Message type is {message.Type}");
+                
+            
                 if (message.Type == MessageType.SuccessfulPayment)
-                { Console.WriteLine("Successful buy!");
+                { Console.WriteLine($"Successful buy!" +
+                    $"Amount of buy:\t {message.SuccessfulPayment.TotalAmount} \n" +
+                    $"Order of Payment:\n " +
+                    $"Id of payment:\t {message.SuccessfulPayment.TelegramPaymentChargeId}\n" +
+                    $"Id of provider:\t {message.SuccessfulPayment.ProviderPaymentChargeId}\n" +
+                    $"Invoice:\t {message.SuccessfulPayment.InvoicePayload}\n" +
+                    $"Code send to:\t {message.SuccessfulPayment.OrderInfo.Email}");
                   //  Console.WriteLine($"User {prechek.From.Id} bought the game\n" +
                     //       $"Details of order: Date: {DateTime.Now}\n" +
-                      //     $"Gift code sent to {prechek.OrderInfo.Email}\n" +
-                        //   $"OrderID: {prechek.Id}\n" +
-                          // $"Amount: {prechek.TotalAmount}");
+                    //     $"Gift code sent to {prechek.OrderInfo.Email}\n" +
+                    //   $"OrderID: {prechek.Id}\n" +
+                    // $"Amount: {prechek.TotalAmount}");
                 }
                    
 
@@ -171,6 +191,8 @@ namespace TeleGramBot
                 // Only process text messages
                 if (message.Text is not { } messageText)
                 return;
+                tgbot._textValue=messageText;
+                _insertText=messageText;
                 var chatId = message.Chat.Id;
                 
                 Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
@@ -278,21 +300,53 @@ namespace TeleGramBot
                 //
                 if (messageText.Contains("/find"))
                 {
-                    FindingGame findingGame = new FindingGame(messageText);
+                    FindingGame findingGame = new FindingGame();
+                    //var newUpdate = botClient.GetUpdatesAsync();
 
-                    Message sentMessage_new = await botClient.SendTextMessageAsync(
-                              chatId: chatId,
-                              text: "Finding now: ",
-                              cancellationToken: cancellationToken);
+                    Message asked = await botClient.SendTextMessageAsync(chatId: chatId, text: "Whats the game are you searching?");
+                    var newUpdate = await  botClient.GetUpdatesAsync();
+                    tgbot._textValue=newUpdate[newUpdate.Length-1].Message.Text;
+                    while (newUpdate == null || tgbot._textValue=="/find")
+                    {
+                       Thread.Sleep(1000);
+                        newUpdate = await botClient.GetUpdatesAsync();
+                        tgbot._textValue=newUpdate[newUpdate.Length-1].Message.Text;
+                    }  
+                        Console.WriteLine($"Current MessageText is -> {findingGame._field}");
+                    
+                    //}
+                    findingGame._field=tgbot._textValue;
+                    Console.WriteLine($"Now MessageText is -> {findingGame._field}");
+                    await botClient.SendTextMessageAsync(chatId, $"Bot searching now: {tgbot._textValue}");
 
-                    findingGame.FindTheGame(findingGame._field);
+                    
+
+                    //findingGame.FindTheGame(findingGame._field);
                 }
-                 
+
                 // Echo received message text
 
 
             }
-            
+           async Task AdditionalHandeofUpdates (ITelegramBotClient newbot, Update update, CancellationToken cancellation)
+            {
+                var up = update.Message;
+                if (up is not { } message)
+                    return;
+                if (message.Text is not { } messageText)
+                    return;
+                _insertText=messageText;
+                await newbot.SendTextMessageAsync(up.Chat.Id,"Message from new handler");
+                
+
+                Console.WriteLine("Workin additional handler!!");
+                Console.WriteLine(_insertText);
+               
+                Message sentMessage_new = await botClient.SendTextMessageAsync(
+                          chatId: update.Message.Chat.Id,
+                          text: "Finding now: ",
+                          cancellationToken: cancellation);
+            } 
             Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
             {
                 var ErrorMessage = exception switch
