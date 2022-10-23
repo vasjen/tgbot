@@ -19,22 +19,29 @@ using Telegram.Bot.Types.InlineQueryResults;
 using System.Security.Cryptography.X509Certificates;
 using static TeleGramBot.FindingGame;
 using System.Runtime.CompilerServices;
+using System.Transactions;
 
 namespace TeleGramBot
 {
-    
+
     public class TeleGramBotClass
     {
-        public delegate void StatusHandler(string message);
-        public event StatusHandler? Notify;
+
         private int _idOfMessage;
+        private long _idOfSender;
         private string _textValue;
+        private int _currentposition;
+        private GameCard[] gameCards;
+        private int _idOfPhotoMessage;
+        private  enum _status { first, last, normal}
         public TeleGramBotClass()
         {
         }
         private static string _botToken { get; set; }
-        private static int _idOfPhotoMessage {get;set; }
+        
         private static string _insertText { get; set; }
+        private static double _priceInUSD;
+        
 
 
         internal static async Task Run()
@@ -46,39 +53,48 @@ namespace TeleGramBot
             var cts = new CancellationTokenSource();
             var botClient = new TelegramBotClient(_botToken);
             var newbot = new TelegramBotClient(_botToken);
-
             static InlineKeyboardMarkup CreatingButtons()
             {
 
-                
-                InlineKeyboardButton _prev = new InlineKeyboardButton("<<-" );
+                InlineKeyboardButton _prev = new InlineKeyboardButton("<<-");
                 InlineKeyboardButton _next = new InlineKeyboardButton("->>");
                 InlineKeyboardButton _action = new InlineKeyboardButton($"Buy");
                 _prev.CallbackData="Previous"; _next.CallbackData="Next";
                 _action.CallbackData="invoice";
                 InlineKeyboardButton[] _1stRow = new InlineKeyboardButton[1];
 
-                    _1stRow[0]= _action;
-                
-            
+                _1stRow[0]= _action;
+
+
                 InlineKeyboardButton[] _2ndRow = new InlineKeyboardButton[2];
                 _2ndRow[0] = _prev;
                 _2ndRow[1] = _next;
-               
-                InlineKeyboardMarkup _menu = new InlineKeyboardMarkup(new[] {_1stRow,_2ndRow }); ;
+
+                InlineKeyboardMarkup _menu = new InlineKeyboardMarkup(new[] { _1stRow, _2ndRow }); ;
                 return _menu;
             }
-            void ShowResultsOfFinding(GameCard[] obj)
+
+            async Task ShowResultsOfFinding(GameCard[] obj, int position, ITelegramBotClient botclient, long chatID)
             {
+               
                 int count = obj.Length;
-                int position = 0;
 
-                //CreatingButtons(); In the End
+                Message showResult = await botClient.SendPhotoAsync(chatID, 
+                    photo: obj[position].photo, 
+                    caption: $"{position+1} of {count}\n {obj[position].title}" +
+                    $" {obj[position].price} ₺",
+                    replyMarkup: CreatingButtons());
+                tgbot._idOfPhotoMessage=showResult.MessageId;
+
+
+               // await botClient.EditMessageCaptionAsync();
+
                 
-            } 
 
-            
-                var receiverOptions = new ReceiverOptions
+            }
+
+
+            var receiverOptions = new ReceiverOptions
                 {
                     AllowedUpdates = Array.Empty<UpdateType>() // receive all update types
                 };
@@ -110,6 +126,7 @@ namespace TeleGramBot
 
             // Send cancellation request to stop bot
             cts.Cancel();
+            
 
             
             async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
@@ -118,8 +135,8 @@ namespace TeleGramBot
                 GameCard[] result = null;
                 // Only process Message updates: https://core.telegram.org/bots/api#message
                 if (update.Message is not { } message)
-                {
-
+                {   
+                    //tgbot._idOfSender=update.Message.Chat.Id;
                     if (update.CallbackQuery != null)
                     {
                         Console.WriteLine("Register callback!");
@@ -151,13 +168,29 @@ namespace TeleGramBot
                         if (update.CallbackQuery.Data.ToLower()=="previous")
                         {
 
-                            await botClient.EditMessageMediaAsync(chatId: update.CallbackQuery.From.Id,
-                               messageId: _idOfPhotoMessage, new InputMediaPhoto(media: "https://store-images.s-microsoft.com/image/apps.34695.68182501197884443.ac728a87-7bc1-4a0d-8bc6-0712072da93c.25816f86-f27c-4ade-ae29-222661145f1f?w=200"));
-                            await botClient.EditMessageCaptionAsync(chatId: update.CallbackQuery.From.Id,
-                                messageId: _idOfPhotoMessage, caption: "A some different game!!!\n" +
-                                "U can buy for 60$",
-                                replyMarkup: CreatingButtons()
-                                );
+                            if (tgbot._currentposition >0)
+                            {
+                                tgbot._currentposition--;
+                               
+                                await botClient.EditMessageMediaAsync(tgbot._idOfSender,tgbot._idOfPhotoMessage, new InputMediaPhoto( media:  $"{tgbot.gameCards[tgbot._currentposition].photo}"));
+                                await botClient.EditMessageCaptionAsync(tgbot._idOfSender, tgbot._idOfPhotoMessage, $"" +
+                                   $"{tgbot._currentposition+1} of {tgbot.gameCards.Length}\n " +
+                                   $"{tgbot.gameCards[tgbot._currentposition].title} - " +
+                                   $"{tgbot.gameCards[tgbot._currentposition].price} ₺", replyMarkup: CreatingButtons());
+                            }
+                        }
+                        if (update.CallbackQuery.Data.ToLower()=="next")
+                        {
+                            if (tgbot._currentposition <tgbot.gameCards.Length-1)
+                            {
+                                tgbot._currentposition++;
+                                await botClient.EditMessageMediaAsync(tgbot._idOfSender, tgbot._idOfPhotoMessage, new InputMediaPhoto(media: $"{tgbot.gameCards[tgbot._currentposition].photo}"));
+                                await botClient.EditMessageCaptionAsync(tgbot._idOfSender, tgbot._idOfPhotoMessage, $"" +
+                                    $"{tgbot._currentposition+1} of {tgbot.gameCards.Length}\n " +
+                                    $"{tgbot.gameCards[tgbot._currentposition].title} - " +
+                                    $"{tgbot.gameCards[tgbot._currentposition].price} ₺", replyMarkup: CreatingButtons());
+
+                            }
                         }
                         return;
                     }
@@ -198,9 +231,10 @@ namespace TeleGramBot
                 if (message.Text is not { } messageText)
                 return;
                 tgbot._textValue=messageText;
+
                 _insertText=messageText;
                 var chatId = message.Chat.Id;
-                
+
                 Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
 
                 if (messageText.ToLower().Contains("want"))
@@ -261,7 +295,7 @@ namespace TeleGramBot
 
                 }
 
-                if (messageText.ToLower().Contains("menu"))
+    /*                if (messageText.ToLower().Contains("menu"))
                 {
 
                                Message sentExample = await botClient.SendPhotoAsync(
@@ -276,7 +310,7 @@ namespace TeleGramBot
 
 
                 }
-
+                */
 
 
 
@@ -328,13 +362,13 @@ namespace TeleGramBot
 
 
                       result = findingGame.FindTheGame(findingGame._field);
+                    tgbot.gameCards= (GameCard[])result.Clone(); 
 
                     await botClient.SendTextMessageAsync(chatId, $"Result of searching: {result.Length} Games\n");
-                    foreach (var item in result)
-                    {
-                      await botClient.SendPhotoAsync(chatId, photo: item.photo, caption: $"{item.title} - {item.price}");
-                      //  await botClient.SendTextMessageAsync(chatId, $"{item.title} - {item.price} -{item.photo}"); 
-                    }
+                    if (result.Length > 0)
+                        tgbot._currentposition=0;
+                    tgbot._idOfSender=chatId;
+                       await ShowResultsOfFinding(tgbot.gameCards,tgbot._currentposition,botClient, tgbot._idOfSender);
                 }
 
                 // Echo received message text
