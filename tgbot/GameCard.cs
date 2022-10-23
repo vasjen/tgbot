@@ -8,15 +8,15 @@ namespace TeleGramBot
 {
     public class GameCard
     { 
-        public string link, title;
+        public string link, title, price, photo;
         private int price_int;
-        public double price;
+        
         static List<GameCard> instanse = new List<GameCard>();
         public GameCard()
         {
 
         }
-        public GameCard(string Name, string Desc, double price)
+        public GameCard(string Name, string Desc, string price)
         {
             this.title = Name;
             this.link = Desc;
@@ -29,12 +29,7 @@ namespace TeleGramBot
             this.price_int = price;
         }
 
-        internal static List<GameCard> CreatingList(string name, string link, double price)
-        {
-            GameCard gameCard = new GameCard(name, link, price);
-            instanse.Add(gameCard);
-            return instanse;
-        }
+        
 
           
     }

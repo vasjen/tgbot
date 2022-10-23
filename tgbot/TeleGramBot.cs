@@ -18,6 +18,7 @@ using static System.Net.WebRequestMethods;
 using Telegram.Bot.Types.InlineQueryResults;
 using System.Security.Cryptography.X509Certificates;
 using static TeleGramBot.FindingGame;
+using System.Runtime.CompilerServices;
 
 namespace TeleGramBot
 {
@@ -35,37 +36,46 @@ namespace TeleGramBot
         private static int _idOfPhotoMessage {get;set; }
         private static string _insertText { get; set; }
 
-        
+
         internal static async Task Run()
         {
             TeleGramBotClass tgbot = new TeleGramBotClass();
-            
+
             //Console.WriteLine("Insert API Token");
             _botToken = "5744464072:AAG2YTypfSV4PwWt7MlOnaB58SjvqLOlUSw";
             var cts = new CancellationTokenSource();
             var botClient = new TelegramBotClient(_botToken);
-            var newbot = new TelegramBotClient (_botToken);
+            var newbot = new TelegramBotClient(_botToken);
 
-            static  InlineKeyboardMarkup GenerationMethod()
+            static InlineKeyboardMarkup CreatingButtons()
             {
-                InlineKeyboardButton _prev = new InlineKeyboardButton("<<-");
+
+                
+                InlineKeyboardButton _prev = new InlineKeyboardButton("<<-" );
                 InlineKeyboardButton _next = new InlineKeyboardButton("->>");
-                InlineKeyboardButton _action = new InlineKeyboardButton("Buy");
+                InlineKeyboardButton _action = new InlineKeyboardButton($"Buy");
                 _prev.CallbackData="Previous"; _next.CallbackData="Next";
-                _action.CallbackData="BUY!!";
-                InlineKeyboardButton[] _test1row = new InlineKeyboardButton[1];
+                _action.CallbackData="invoice";
+                InlineKeyboardButton[] _1stRow = new InlineKeyboardButton[1];
+
+                    _1stRow[0]= _action;
                 
-                    _test1row[0]= new InlineKeyboardButton("BUY!!!");
-                    _test1row[0].CallbackData="invoice";
-                
-                
-                InlineKeyboardButton[] _test2row = new InlineKeyboardButton[2];
-                _test2row[0] = _prev;
-                _test2row[1] = _next;
-                
-                InlineKeyboardMarkup _menu = new InlineKeyboardMarkup(new[] {_test1row, _test2row }); ;
+            
+                InlineKeyboardButton[] _2ndRow = new InlineKeyboardButton[2];
+                _2ndRow[0] = _prev;
+                _2ndRow[1] = _next;
+               
+                InlineKeyboardMarkup _menu = new InlineKeyboardMarkup(new[] {_1stRow,_2ndRow }); ;
                 return _menu;
             }
+            void ShowResultsOfFinding(GameCard[] obj)
+            {
+                int count = obj.Length;
+                int position = 0;
+
+                //CreatingButtons(); In the End
+                
+            } 
 
             
                 var receiverOptions = new ReceiverOptions
@@ -104,8 +114,8 @@ namespace TeleGramBot
             
             async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
             {
-
-
+                 
+                GameCard[] result = null;
                 // Only process Message updates: https://core.telegram.org/bots/api#message
                 if (update.Message is not { } message)
                 {
@@ -146,7 +156,7 @@ namespace TeleGramBot
                             await botClient.EditMessageCaptionAsync(chatId: update.CallbackQuery.From.Id,
                                 messageId: _idOfPhotoMessage, caption: "A some different game!!!\n" +
                                 "U can buy for 60$",
-                                replyMarkup: GenerationMethod()
+                                replyMarkup: CreatingButtons()
                                 );
                         }
                         return;
@@ -177,11 +187,7 @@ namespace TeleGramBot
                     $"Id of provider:\t {message.SuccessfulPayment.ProviderPaymentChargeId}\n" +
                     $"Invoice:\t {message.SuccessfulPayment.InvoicePayload}\n" +
                     $"Code send to:\t {message.SuccessfulPayment.OrderInfo.Email}");
-                  //  Console.WriteLine($"User {prechek.From.Id} bought the game\n" +
-                    //       $"Details of order: Date: {DateTime.Now}\n" +
-                    //     $"Gift code sent to {prechek.OrderInfo.Email}\n" +
-                    //   $"OrderID: {prechek.Id}\n" +
-                    // $"Amount: {prechek.TotalAmount}");
+                
                 }
                    
 
@@ -262,7 +268,7 @@ namespace TeleGramBot
                                 chatId: chatId,
                                 photo: "https://store-images.s-microsoft.com/image/apps.55934.13550335257385479.f907e8a1-c727-4bed-9e2c-94c239249dba.b5fd70da-71e5-4849-b499-25c43d8c9a25?q=90&w=177&h=265",
                                 caption: "Name of the this Game\n Price 45$",
-                                replyMarkup: GenerationMethod());
+                                replyMarkup: CreatingButtons());
                     _idOfPhotoMessage = sentExample.MessageId;
 
 
@@ -319,34 +325,23 @@ namespace TeleGramBot
                     Console.WriteLine($"Now MessageText is -> {findingGame._field}");
                     await botClient.SendTextMessageAsync(chatId, $"Bot searching now: {tgbot._textValue}");
 
-                    
 
-                    //findingGame.FindTheGame(findingGame._field);
+
+                      result = findingGame.FindTheGame(findingGame._field);
+
+                    await botClient.SendTextMessageAsync(chatId, $"Result of searching: {result.Length} Games\n");
+                    foreach (var item in result)
+                    {
+                      await botClient.SendPhotoAsync(chatId, photo: item.photo, caption: $"{item.title} - {item.price}");
+                      //  await botClient.SendTextMessageAsync(chatId, $"{item.title} - {item.price} -{item.photo}"); 
+                    }
                 }
 
                 // Echo received message text
 
 
             }
-           async Task AdditionalHandeofUpdates (ITelegramBotClient newbot, Update update, CancellationToken cancellation)
-            {
-                var up = update.Message;
-                if (up is not { } message)
-                    return;
-                if (message.Text is not { } messageText)
-                    return;
-                _insertText=messageText;
-                await newbot.SendTextMessageAsync(up.Chat.Id,"Message from new handler");
-                
-
-                Console.WriteLine("Workin additional handler!!");
-                Console.WriteLine(_insertText);
-               
-                Message sentMessage_new = await botClient.SendTextMessageAsync(
-                          chatId: update.Message.Chat.Id,
-                          text: "Finding now: ",
-                          cancellationToken: cancellation);
-            } 
+          
             Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
             {
                 var ErrorMessage = exception switch
