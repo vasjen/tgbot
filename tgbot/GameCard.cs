@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using Telegram.Bot.Types.Payments;
 
@@ -9,7 +10,8 @@ namespace TeleGramBot
     public class GameCard
     { 
         public string link, title, price, photo;
-        private int price_int;
+        private double price_int;
+        public int price_USD;
         
         static List<GameCard> instanse = new List<GameCard>();
         public GameCard()
@@ -28,7 +30,7 @@ namespace TeleGramBot
             
             this.price_int = price;
         }
-
+        
         
 
           

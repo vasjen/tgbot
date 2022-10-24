@@ -40,7 +40,7 @@ namespace TeleGramBot
         private static string _botToken { get; set; }
         
         private static string _insertText { get; set; }
-        private static double _priceInUSD;
+        
         
 
 
@@ -53,12 +53,31 @@ namespace TeleGramBot
             var cts = new CancellationTokenSource();
             var botClient = new TelegramBotClient(_botToken);
             var newbot = new TelegramBotClient(_botToken);
+
+             int ConvertPriseToUSD(string text)
+            {
+                int result = 0;
+                if (text != null)
+                {
+                    text=text.Replace(".",",");
+                    double temp = double.Parse(text);
+                    Console.WriteLine($"Price in tyr: {temp}");
+                    temp=temp*0.054;
+                    Console.WriteLine($"Price in $ USD: {temp}");
+                    temp = Math.Round(temp, 2);
+                    Console.WriteLine($"Price in $ USD: {temp} after round to 0.01");
+                    result = Convert.ToInt32(temp*100);
+                    Console.WriteLine($"Final price in $ ISD int32 : {result}");
+                    return result;
+                }
+                return result;
+            }
             static InlineKeyboardMarkup CreatingButtons()
             {
 
                 InlineKeyboardButton _prev = new InlineKeyboardButton("<<-");
                 InlineKeyboardButton _next = new InlineKeyboardButton("->>");
-                InlineKeyboardButton _action = new InlineKeyboardButton($"Buy");
+                InlineKeyboardButton _action = new InlineKeyboardButton("Buy");
                 _prev.CallbackData="Previous"; _next.CallbackData="Next";
                 _action.CallbackData="invoice";
                 InlineKeyboardButton[] _1stRow = new InlineKeyboardButton[1];
@@ -92,7 +111,15 @@ namespace TeleGramBot
                 
 
             }
+            async Task NavigationButtons()
+            {
 
+                await botClient.EditMessageMediaAsync(tgbot._idOfSender, tgbot._idOfPhotoMessage, new InputMediaPhoto(media: $"{tgbot.gameCards[tgbot._currentposition].photo}"));
+                await botClient.EditMessageCaptionAsync(tgbot._idOfSender, tgbot._idOfPhotoMessage, $"" +
+                   $"{tgbot._currentposition+1} of {tgbot.gameCards.Length}\n " +
+                   $"{tgbot.gameCards[tgbot._currentposition].title} - " +
+                   $"{tgbot.gameCards[tgbot._currentposition].price} ₺", replyMarkup: CreatingButtons());
+            }
 
             var receiverOptions = new ReceiverOptions
                 {
@@ -127,6 +154,7 @@ namespace TeleGramBot
             // Send cancellation request to stop bot
             cts.Cancel();
             
+            
 
             
             async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
@@ -145,24 +173,26 @@ namespace TeleGramBot
                             "User choise is {1}", update.CallbackQuery.Id, update.CallbackQuery.Data);
                         if (update.CallbackQuery.Data.ToLower()=="invoice")
                         {
-                            LabeledPrice game1 = new LabeledPrice("Game0", 200);
-                            LabeledPrice game2 = new LabeledPrice("Game1", 500);
+                            int PriceToInvoice = ConvertPriseToUSD(tgbot.gameCards[tgbot._currentposition].price);
+                           
+                            LabeledPrice game1 = new LabeledPrice($"{tgbot.gameCards[tgbot._currentposition].title}", PriceToInvoice);
+                            LabeledPrice game2 = new LabeledPrice("Service fee: 1$", 100);
 
                             LabeledPrice[] catalog = new LabeledPrice[2];
                             catalog[0] = game1;
                             catalog[1] = game2;
-                            await botClient.SendInvoiceAsync(chatId: update.CallbackQuery.From.Id,
-                                              title: "Product",
-                                              description: "Description",
+                            Message sendInvoice=await botClient.SendInvoiceAsync(chatId: update.CallbackQuery.From.Id,
+                                              title: $"{tgbot.gameCards[tgbot._currentposition].title}",
+                                              description: "Redem code will be send to this email!",
                                               payload: "somePayload",
                                               providerToken: "1877036958:TEST:c0c0f684e8b1c6968e6d66a6ed77d2cd46f8be4a",
                                               //providerToken: "1877036958:TEST:c0c0f684e8b1c6968e6d66a6ed77d2cd46f8be4a",
-                                              currency: "TRY",
+                                              currency: "USD",
                                               prices: catalog,
                                               needEmail: true,
                                               startParameter: "exapmle",
                                               isFlexible: false,
-                                              photoUrl: "https://store-images.s-microsoft.com/image/apps.55934.13550335257385479.f907e8a1-c727-4bed-9e2c-94c239249dba.b5fd70da-71e5-4849-b499-25c43d8c9a25?q=90&w=177&h=265"
+                                              photoUrl: $"{tgbot.gameCards[tgbot._currentposition].photo}"
                                               );
                         }
                         if (update.CallbackQuery.Data.ToLower()=="previous")
@@ -171,12 +201,7 @@ namespace TeleGramBot
                             if (tgbot._currentposition >0)
                             {
                                 tgbot._currentposition--;
-                               
-                                await botClient.EditMessageMediaAsync(tgbot._idOfSender,tgbot._idOfPhotoMessage, new InputMediaPhoto( media:  $"{tgbot.gameCards[tgbot._currentposition].photo}"));
-                                await botClient.EditMessageCaptionAsync(tgbot._idOfSender, tgbot._idOfPhotoMessage, $"" +
-                                   $"{tgbot._currentposition+1} of {tgbot.gameCards.Length}\n " +
-                                   $"{tgbot.gameCards[tgbot._currentposition].title} - " +
-                                   $"{tgbot.gameCards[tgbot._currentposition].price} ₺", replyMarkup: CreatingButtons());
+                                await NavigationButtons();
                             }
                         }
                         if (update.CallbackQuery.Data.ToLower()=="next")
@@ -184,12 +209,7 @@ namespace TeleGramBot
                             if (tgbot._currentposition <tgbot.gameCards.Length-1)
                             {
                                 tgbot._currentposition++;
-                                await botClient.EditMessageMediaAsync(tgbot._idOfSender, tgbot._idOfPhotoMessage, new InputMediaPhoto(media: $"{tgbot.gameCards[tgbot._currentposition].photo}"));
-                                await botClient.EditMessageCaptionAsync(tgbot._idOfSender, tgbot._idOfPhotoMessage, $"" +
-                                    $"{tgbot._currentposition+1} of {tgbot.gameCards.Length}\n " +
-                                    $"{tgbot.gameCards[tgbot._currentposition].title} - " +
-                                    $"{tgbot.gameCards[tgbot._currentposition].price} ₺", replyMarkup: CreatingButtons());
-
+                                await NavigationButtons();
                             }
                         }
                         return;
