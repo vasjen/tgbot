@@ -18,21 +18,16 @@ namespace TeleGramBot
 
         public GameCard[] FindTheGame(string _searichg)
         {
-            
-           
+
+            ChromeOptions options = new ChromeOptions();
+
+
+            IWebDriver driver = new ChromeDriver();
+
+            driver.Url = @"https://www.xbox.com/tr-TR/games/all-games";
+
             if (_searichg.Length != 0)
             {
-                ChromeOptions options = new ChromeOptions();
-
-               
-                IWebDriver driver = new ChromeDriver();
-
-                driver.Url = @"https://www.xbox.com/tr-TR/games/all-games";
-               
-                
-             
-
-
                 while (driver.FindElements(By.ClassName("m-product-placement-item")).Count == 0) //While dont exist gamecard in catalog script dont run a search and still waiting
                 {
                      Thread.Sleep(1000);
@@ -78,22 +73,19 @@ namespace TeleGramBot
                     }
 
                     Console.WriteLine($"Всего было найдено {catalog.Length} игр");
-                    return catalog;
-
-                    
-                    driver.Close();
                     driver.Quit();
-                    
-
+                    return catalog;
 
                 }
                 else
                 {
                     Console.WriteLine("Dont exist the game in catalog this enter name");
                     GameCard[] emptyCatalog = new GameCard[0];
+                    driver.Quit();
                     return emptyCatalog;
-                    //driver.Close();
+                   
                     
+
                 }
                
 
@@ -105,7 +97,7 @@ namespace TeleGramBot
                 return emptyCatalog;
             }
 
-
+            
 
             
 

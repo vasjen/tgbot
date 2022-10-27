@@ -97,14 +97,19 @@ namespace TeleGramBot
             {
                
                 int count = obj.Length;
-
-                Message showResult = await botClient.SendPhotoAsync(chatID, 
-                    photo: obj[position].photo, 
-                    caption: $"{position+1} of {count}\n {obj[position].title}" +
-                    $" {obj[position].price} ₺",
-                    replyMarkup: CreatingButtons());
-                tgbot._idOfPhotoMessage=showResult.MessageId;
-
+                if (count != 0)
+                {
+                    Message showResult = await botClient.SendPhotoAsync(chatID,
+                        photo: obj[position].photo,
+                        caption: $"{position+1} of {count}\n {obj[position].title}" +
+                        $" {obj[position].price} ₺",
+                        replyMarkup: CreatingButtons());
+                    tgbot._idOfPhotoMessage=showResult.MessageId;
+                }
+                else
+                {
+                    Message noRessult = await botClient.SendTextMessageAsync(chatID, $"Bot can't find a game {tgbot._textValue}");
+                }
 
                // await botClient.EditMessageCaptionAsync();
 
@@ -365,11 +370,13 @@ namespace TeleGramBot
 
                     Message asked = await botClient.SendTextMessageAsync(chatId: chatId, text: "Whats the game are you searching?");
                     var newUpdate = await  botClient.GetUpdatesAsync();
-                    tgbot._textValue=newUpdate[newUpdate.Length-1].Message.Text;
+                    if (newUpdate[newUpdate.Length-1].Message!=null)
+                        tgbot._textValue=newUpdate[newUpdate.Length-1].Message.Text;
                     while (newUpdate == null || tgbot._textValue=="/find")
                     {
                        Thread.Sleep(1000);
                         newUpdate = await botClient.GetUpdatesAsync();
+                        if (newUpdate[newUpdate.Length-1].Message!=null)
                         tgbot._textValue=newUpdate[newUpdate.Length-1].Message.Text;
                     }  
                         Console.WriteLine($"Current MessageText is -> {findingGame._field}");
