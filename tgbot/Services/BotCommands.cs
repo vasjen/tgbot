@@ -5,6 +5,7 @@ using Telegram.Bot.Types;
 using Telegram.Bot;
 using Telegram.Bot.Types.Payments;
 
+
 namespace tgbot.services
 {
     internal static class BotCommands
@@ -33,7 +34,7 @@ namespace tgbot.services
 
         public static InlineKeyboardMarkup CreatingButtons()
         {
-            /*
+            
             InlineKeyboardButton _prev = new InlineKeyboardButton("<<-");
             InlineKeyboardButton _next = new InlineKeyboardButton("->>");
             InlineKeyboardButton _action = new InlineKeyboardButton("Buy");
@@ -47,13 +48,8 @@ namespace tgbot.services
             InlineKeyboardButton[] _2ndRow = new InlineKeyboardButton[2];
             _2ndRow[0] = _prev;
             _2ndRow[1] = _next;
-            */
-            InlineKeyboardMarkup _menu = new(new[] { new[]
-            {
-                InlineKeyboardButton.WithCallbackData(text:"<<--", callbackData:"left"),
-                InlineKeyboardButton.WithCallbackData(text:"-->>", callbackData:"right"),
-            },
-            new[] { InlineKeyboardButton.WithCallbackData(text:"Buy it", callbackData: "invoice")  } });
+
+            InlineKeyboardMarkup _menu = new(new[] { _1stRow, _2ndRow });
             return _menu;
         }
         async public static Task NavigationButtons(TeleGramBotClass client)

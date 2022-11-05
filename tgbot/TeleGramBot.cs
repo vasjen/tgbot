@@ -84,19 +84,19 @@ namespace tgbot
 
                 // Only process Message updates: https://core.telegram.org/bots/api#message
                 if (update.Message is not { } message)
-                    return;
+                {
+                    if (update.CallbackQuery != null)
+                    {
+                        await BotCommands.GetCallback(client);
+                    }
+                    if (update.PreCheckoutQuery != null)
+                    {
+                        await BotCommands.PrechekOut(client);
+                    }
+                    return; }
 
                 
-                if (update.CallbackQuery != null)
-                {
-                    Console.WriteLine("Register callback");
-                    await BotCommands.GetCallback(client);
-                }
-                if (update.PreCheckoutQuery != null)
-                {
-                    Console.WriteLine("Register PreCheckout");
-                    await BotCommands.PrechekOut(client);
-                }
+                
                 if (message.Type == MessageType.SuccessfulPayment)
                 { Console.WriteLine($"Successful buy!" +
                     $"Amount of buy:\t {message.SuccessfulPayment.TotalAmount} \n" +
