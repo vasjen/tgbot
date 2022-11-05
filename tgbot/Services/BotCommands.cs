@@ -84,7 +84,7 @@ namespace tgbot.services
                     Message sendInvoice = await client.botClient.SendInvoiceAsync(chatId: client.update.CallbackQuery.From.Id,
                                       title: $"{client.gameCards[client._currentposition].title}",
                                       description: "Redem code will be send to this email!",
-                                      payload: "somePayload",
+                                      payload: $"{client.gameCards[client._currentposition].title} sell {DateTime.Now}",
                                       providerToken: "1877036958:TEST:c0c0f684e8b1c6968e6d66a6ed77d2cd46f8be4a",
                                       //providerToken: "1877036958:TEST:c0c0f684e8b1c6968e6d66a6ed77d2cd46f8be4a",
                                       currency: "USD",

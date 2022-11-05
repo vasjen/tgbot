@@ -25,15 +25,7 @@ namespace tgbot
         public Update update;
         public List<GameCard> gameCards;
 
-        public TeleGramBotClass(Update update, ITelegramBotClient botClient)
-
-        {
-            this.update = update;
-            _idOfMessage = update.Id;
-            _idOfSender = update.Message.From.Id;
-            this.botClient = botClient;
-
-        }
+        
         public TeleGramBotClass()
         {
 
@@ -85,6 +77,7 @@ namespace tgbot
                 // Only process Message updates: https://core.telegram.org/bots/api#message
                 if (update.Message is not { } message)
                 {
+                   
                     if (update.CallbackQuery != null)
                     {
                         await BotCommands.GetCallback(client);
@@ -95,8 +88,8 @@ namespace tgbot
                     }
                     return; }
 
-                
-                
+                client._idOfSender=message.Chat.Id;
+
                 if (message.Type == MessageType.SuccessfulPayment)
                 { Console.WriteLine($"Successful buy!" +
                     $"Amount of buy:\t {message.SuccessfulPayment.TotalAmount} \n" +
@@ -118,6 +111,7 @@ namespace tgbot
 
                
                 client._textValue=messageText;
+               
                 var chatId = message.Chat.Id;
 
                 Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");

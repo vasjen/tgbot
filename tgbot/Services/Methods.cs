@@ -25,7 +25,7 @@ namespace tgbot.services
             options.PageLoadStrategy = PageLoadStrategy.Normal;
 
             options.AddArgument("--no-sandbox");
-           // options.AddArgument("--headless");
+            options.AddArgument("--headless");
             options.AddArgument("--disable-gpu");
             options.AddArgument("--disable-crash-reporter");
             options.AddArgument("--disable-extensions");
