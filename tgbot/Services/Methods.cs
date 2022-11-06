@@ -11,7 +11,8 @@ namespace tgbot.services
 {
     internal class Methods
 
-    {   
+    {
+        private static string _login, _password;
         internal static IWebDriver GetWebDriver()
         {
             ChromeDriverService service = ChromeDriverService.CreateDefaultService();
@@ -25,7 +26,8 @@ namespace tgbot.services
             options.PageLoadStrategy = PageLoadStrategy.Normal;
 
             options.AddArgument("--no-sandbox");
-            options.AddArgument("--headless");
+            
+            options.AddArgument("--window-size=500,658");
             options.AddArgument("--disable-gpu");
             options.AddArgument("--disable-crash-reporter");
             options.AddArgument("--disable-extensions");
@@ -78,7 +80,7 @@ namespace tgbot.services
 
                         card.photo=_photoParent[i].FindElement(By.ClassName("c-image")).GetAttribute("src");
                         card.uid = _resultPrice[i].GetAttribute("data-bigid");
-
+                        card.link="https://www.xbox.com/tr-TR/games/store/p/"+card.uid;
 
                         try
                         {
@@ -135,6 +137,63 @@ namespace tgbot.services
             }
 
         }
-         
+
+        public static void Authentification(IWebDriver driver)
+        {
+            _login="Insert login from Microsoft store";
+            _password="Insert password";
+
+            driver.Url="https://account.xbox.com/account/signin";
+            var Login = driver.FindElement(By.XPath("//input[@id='i0116']"));
+            while (Login == null)
+            {
+                Thread.Sleep(2000);
+            }
+            driver.FindElement(By.XPath("//input[@id='i0116']")).SendKeys(_login);
+            Thread.Sleep(2000);
+            driver.FindElement(By.XPath("//input[@id='idSIButton9']")).Click();
+            Thread.Sleep(2000);
+            driver.FindElement(By.XPath("//input[@id='i0118']")).SendKeys(_password);
+            Thread.Sleep(2000);
+            driver.FindElement(By.XPath("//input[@id='i0118']")).Submit();
+            Thread.Sleep(1000);
+            driver.FindElement(By.XPath("//input[@id='idSIButton9']")).Submit();
+        }
+        public static void BuyTheGame(TeleGramBotClass client )
+        {
+            var driver = GetWebDriver();
+            Authentification(driver);
+            driver.Url = client.link;
+            Thread.Sleep(5000);
+            driver.FindElement(By.XPath("(//button[contains(@class,'Nv0Hx')])[3]")).Click();
+
+            driver.FindElement(By.XPath("//button[contains(.,'Hediye olarak')]")).Click();
+           
+
+
+
+
+            try
+            {   Thread.Sleep(5000);
+                driver.SwitchTo().Frame("purchase-sdk-hosted-iframe");
+                
+                driver.SwitchTo().ActiveElement().SendKeys($"{client.email}");
+                driver.SwitchTo().ActiveElement().SendKeys(Keys.Tab);
+
+                
+                driver.SwitchTo().ActiveElement().SendKeys("TelegramBot");
+
+                driver.SwitchTo().ActiveElement().SendKeys(Keys.Enter);
+                Thread.Sleep(5000);
+
+                driver.SwitchTo().ActiveElement().SendKeys(Keys.Enter);
+
+             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            
+        }
     }
 }

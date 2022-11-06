@@ -16,11 +16,13 @@ namespace tgbot
     internal class TeleGramBotClass
     {
 
-        public int _idOfMessage;
+        
         public long _idOfSender;
         public string _textValue;
         public int _currentposition;
         public int _idOfPhotoMessage;
+        public string email;
+        public string link;
         public ITelegramBotClient botClient;
         public Update update;
         public List<GameCard> gameCards;
@@ -38,8 +40,8 @@ namespace tgbot
         {
             TeleGramBotClass client = new TeleGramBotClass();
 
-            //Console.WriteLine("Insert API Token");
-            _botToken = "5744464072:AAG2YTypfSV4PwWt7MlOnaB58SjvqLOlUSw";
+            
+            _botToken = "Insert API Token";
             var cts = new CancellationTokenSource();
             var botClient = new TelegramBotClient(_botToken);
             client.botClient=botClient;
@@ -98,7 +100,9 @@ namespace tgbot
                     $"Id of provider:\t {message.SuccessfulPayment.ProviderPaymentChargeId}\n" +
                     $"Invoice:\t {message.SuccessfulPayment.InvoicePayload}\n" +
                     $"Code send to:\t {message.SuccessfulPayment.OrderInfo.Email}");
-                
+                    client.email=message.SuccessfulPayment.OrderInfo.Email.Clone() as string;
+                    
+                   Methods.BuyTheGame(client);
                 }
                    
 
@@ -115,11 +119,7 @@ namespace tgbot
                 var chatId = message.Chat.Id;
 
                 Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
-                if (messageText=="menu")
-                {
-                    await botClient.SendTextMessageAsync(chatId, "test", replyMarkup: BotCommands.CreatingButtons());
-                }
-
+               
                 if (messageText.Contains("/find"))
                 {
                     
@@ -146,7 +146,7 @@ namespace tgbot
                    // var t =  methods.ShowResultsOfFinding(client);
                   
                 }
-
+                
                 // Echo received message text
 
 

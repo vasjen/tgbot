@@ -13,6 +13,7 @@ namespace tgbot.services
     {
         public const string _linkToBuy = "https://www.xbox.com/tr-TR/games/store/p/";
         public const string _jsStore = "?launchStore=";
+        private static string _paymentToken = "Insert your payment TOKEN";
         static int ConvertPriseToUSD(string text)
         {
             int result = 0;
@@ -85,8 +86,7 @@ namespace tgbot.services
                                       title: $"{client.gameCards[client._currentposition].title}",
                                       description: "Redem code will be send to this email!",
                                       payload: $"{client.gameCards[client._currentposition].title} sell {DateTime.Now}",
-                                      providerToken: "1877036958:TEST:c0c0f684e8b1c6968e6d66a6ed77d2cd46f8be4a",
-                                      //providerToken: "1877036958:TEST:c0c0f684e8b1c6968e6d66a6ed77d2cd46f8be4a",
+                                      providerToken: _paymentToken,
                                       currency: "USD",
                                       prices: catalog,
                                       needEmail: true,
@@ -94,6 +94,7 @@ namespace tgbot.services
                                       isFlexible: false,
                                       photoUrl: $"{client.gameCards[client._currentposition].photo}"
                                       );
+                    client.link=client.gameCards[client._currentposition].link.Clone() as string;
                 }
                 if (client.update.CallbackQuery.Data.ToLower()=="previous")
                 {
@@ -127,6 +128,7 @@ namespace tgbot.services
                 await client.botClient.AnswerPreCheckoutQueryAsync(
                    preCheckoutQueryId: prechek.Id);
                 Console.WriteLine("Answer sended: to {0}", prechek.Id);
+                
 
                 return;
             }
