@@ -1,17 +1,9 @@
-﻿using System;
-using System.Threading.Tasks;
-using Telegram.Bot;
-using Telegram.Bot.Exceptions;
-using Telegram.Bot.Polling;
-using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Args;
-using System.Threading;
-using Parsing;
+﻿using System.Threading.Tasks;
 
 
 
-namespace TeleGramBot
+
+namespace tgbot
 {
     class Program
     { 
